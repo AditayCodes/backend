@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js" 
 import { ApiError } from "../utils/ApiError.js"
 import { User } from "../models/user.model.js"
-import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { uploadOnCloudinary, deleteOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
@@ -212,23 +212,26 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 })
 
 
-const changeCurrentPassword = asyncHandler(async (req, res) => {
-    const { oldPassword, newPasssword } = req.body
+const changeCurrentPassword = asyncHandler(async(req, res) => {
+    const { oldPassword, newPassword } = req.body;
 
-    const user = await User.findById(req.user?._id)
-    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+    const user = await User.findById(req.user?._id);
 
-    if (!isPasswordCorrect) {
-        throw new ApiError(400, "Invalid old password")
+    const isOldPasswordCorrect = await user.comparePassword(oldPassword);
+
+    if (!isOldPasswordCorrect) {
+        throw new ApiError(400, "Incorrect old password");
     }
 
-    user.password = newPasssword
-    await user.save({ validateBeforeSave: false })
-    
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+
     return res
         .status(200)
-        .json(new ApiResponse(200, {} , "Password Changed Sucessfully !!"))
-})
+        .json(
+            new ApiResponse(200, {}, "Password updated successfully")
+        )
+}); 
 
 
 const getCurrentUser = asyncHandler(async (req, res) => {
