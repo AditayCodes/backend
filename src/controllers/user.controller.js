@@ -286,7 +286,7 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
 
     const user = await User.findById(req.user._id).select("avatar");
 
-    const avatarToDelete = user.avatar.public_id;
+    const avatarToDelete = user?.avatar?.public_id;
 
     const updatedUser = await User.findByIdAndUpdate(
         req.user?._id,
@@ -312,6 +312,28 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
         )
 });
 
+
+const deleteImageHandler = async (req, res) => {
+  try {
+    const image = req.body.image;
+
+    if (!image || !image.public_id) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing image or public_id"
+      });
+    }
+
+    const result = await deleteOnCloudinary(image.public_id);
+
+    res.json({ success: true, result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+
+
 const updateUserCoverImage = asyncHandler(async(req, res) => {
     const coverImageLocalPath = req.file?.path;
 
@@ -327,7 +349,7 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
 
     const user = await User.findById(req.user._id).select("coverImage");
 
-    const coverImageToDelete = user.coverImage.public_id;
+    const coverImageToDelete = user?.coverImage?.public_id;
 
     const updatedUser = await User.findByIdAndUpdate(
         req.user?._id,
@@ -496,5 +518,6 @@ export {
     updateUserAvatar,
     updateUserCoverImage,
     getUserChannelProfile,
-    getWatchHistory
+    getWatchHistory,
+    deleteImageHandler
 }
